@@ -1,0 +1,54 @@
+create keyspace project with replication = {'class': 'SimpleStrategy', 'replication_factor':1};
+
+use project;
+
+- Xóa price outlier:
+CREATE TABLE mobile_app_store (id BIGINT,track_name TEXT,size_bytes BIGINT,currency TEXT,price FLOAT,rating_count_tot INT,rating_count_ver INT,user_rating FLOAT,user_rating_ver FLOAT,ver TEXT,cont_rating TEXT,prime_genre TEXT,sup_devices_num INT,ipadSc_urls_num INT,lang_num INT,vpp_lic INT, primary key(currency, price, id)) with clustering order by (price DESC);
+
+SELECT price FROM mobile_app_store WHERE currency = 'USD';
+
+COPY mobile_app_store (id, track_name, size_bytes, currency, price, rating_count_tot, rating_count_ver, user_rating, user_rating_ver, ver, cont_rating, prime_genre, sup_devices_num, ipadSc_urls_num, lang_num, vpp_lic) FROM 'D:\Uni\BigDataEssential\ProjectCuoiKy\data\mobile_app_store\AppleStore.csv' WITH DELIMITER = ',' AND HEADER = TRUE;
+
+DELETE FROM mobile_app_store WHERE price > 50 AND currency = 'USD';
+
+- Đề xuất top app miễn phí cho người dùng:
+
+CREATE TABLE recommend_free_app (id BIGINT,track_name TEXT,size_bytes BIGINT,currency TEXT,price FLOAT,rating_count_tot INT,rating_count_ver INT,user_rating FLOAT,user_rating_ver FLOAT,ver TEXT,cont_rating TEXT,prime_genre TEXT,sup_devices_num INT,ipadSc_urls_num INT,lang_num INT,vpp_lic INT, primary key(currency, user_rating, id, price)) with clustering order by (user_rating DESC);
+
+COPY recommend_free_app (id, track_name, size_bytes, currency, price, rating_count_tot, rating_count_ver, user_rating, user_rating_ver, ver, cont_rating, prime_genre, sup_devices_num, ipadSc_urls_num, lang_num, vpp_lic) FROM 'D:\Uni\BigDataEssential\ProjectCuoiKy\data\mobile_app_store\AppleStore.csv' WITH DELIMITER = ',' AND HEADER = TRUE;
+
+SELECT * FROM recommend_free_app WHERE price = 0 AND currency = 'USD' LIMIT 10 ALLOW FILTERING;
+
+-Tìm app theo loại chính của app
+SELECT * FROM mobile_app_store WHERE prime_genre = 'Games' LIMIT 20 ALLOW FILTERING;
+
+
+- Update giá app theo id của nó.
+CREATE TABLE mobile_app_store (id BIGINT,track_name TEXT,size_bytes BIGINT,currency TEXT,price FLOAT,rating_count_tot INT,rating_count_ver INT,user_rating FLOAT,user_rating_ver FLOAT,ver TEXT,cont_rating TEXT,prime_genre TEXT,sup_devices_num INT,ipadSc_urls_num INT,lang_num INT,vpp_lic INT, primary key(id));
+
+
+COPY mobile_app_store (id, track_name, size_bytes, currency, price, rating_count_tot, rating_count_ver, user_rating, user_rating_ver, ver, cont_rating, prime_genre, sup_devices_num, ipadSc_urls_num, lang_num, vpp_lic) FROM 'D:\HK2NAM3\BigData\ProjectCuoiKy\data\mobile_app_store\AppleStore.csv' WITH DELIMITER = ',' AND HEADER = TRUE;
+
+UPDATE mobile_app_store SET price = {} WHERE id = {};
+
+Cassandra không cho phép truy vấn với điều kiện WHERE và sắp xếp dựa trên các cột không phải là phần của khóa chính mà không sử dụng ALLOW FILTERING. Lý do là truy vấn này có thể tạo ra hiệu suất không đoán trước được.
+
+-Tìm top 10 app hot nhất theo thể loại mà người dùng nhập vào:
+
+CREATE TABLE recommend_app_store (id BIGINT,track_name TEXT,size_bytes BIGINT,currency TEXT,price FLOAT,rating_count_tot INT,rating_count_ver INT,user_rating FLOAT,user_rating_ver FLOAT,ver TEXT,cont_rating TEXT,prime_genre TEXT,sup_devices_num INT,ipadSc_urls_num INT,lang_num INT,vpp_lic INT, primary key(prime_genre, user_rating, rating_count_tot, id)) with clustering order by (user_rating DESC, rating_count_tot DESC);
+
+
+COPY recommend_app_store (id, track_name, size_bytes, currency, price, rating_count_tot, rating_count_ver, user_rating, user_rating_ver, ver, cont_rating, prime_genre, sup_devices_num, ipadSc_urls_num, lang_num, vpp_lic) FROM 'D:\HK2NAM3\BigData\ProjectCuoiKy\data\mobile_app_store\AppleStore.csv' WITH DELIMITER = ',' AND HEADER = TRUE;
+
+SELECT * FROM recommend_app_store WHERE prime_genre = 'Games' ORDER BY user_rating DESC, rating_count_tot DESC LIMIT 10 ALLOW FILTERING;
+
+- Delete 10 app có lượt đánh giá tệ nhất:
+
+CREATE TABLE delete_app (id BIGINT,track_name TEXT,size_bytes BIGINT,currency TEXT,price FLOAT,rating_count_tot INT,rating_count_ver INT,user_rating FLOAT,user_rating_ver FLOAT,ver TEXT,cont_rating TEXT,prime_genre TEXT,sup_devices_num INT,ipadSc_urls_num INT,lang_num INT,vpp_lic INT, primary key(user_rating, rating_count_tot)) with clustering order by (rating_count_tot ASC);
+
+
+COPY delete_app (id, track_name, size_bytes, currency, price, rating_count_tot, rating_count_ver, user_rating, user_rating_ver, ver, cont_rating, prime_genre, sup_devices_num, ipadSc_urls_num, lang_num, vpp_lic) FROM 'D:\HK2NAM3\BigData\ProjectCuoiKy\data\mobile_app_store\AppleStore.csv' WITH DELIMITER = ',' AND HEADER = TRUE;
+
+DELETE FROM delete_app WHERE user_rating = 0.5 LIMIT 5 ALLOW FILTERING;
+
+
